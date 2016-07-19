@@ -18,34 +18,24 @@ class Sync(object):
             return False, False
         choice = raw_input('Do you want to repeat a previous operation for the directory?')
         if choice.lower() == 'y':
-            def choose():
-                print 'Choose from the following options:'
-                try:
-                    choice = int(raw_input(text))
-                except ValueError:
-                    print 'Invalid entry. Try again.'
-                    choose()
-                if (choice > 1) and (choice <= i + 1):
-                    return choice
-                else:
-                    print 'Invalid entry. Try again.'
-                    choose()
-
             destination = config.readline().strip('\n')
             task = config.readline().strip('\n')
             date = config.readline().strip('\n')
             destinations = []
             tasks = []
             dates = []
+            destinations.append(destination)
+            tasks.append(task)
+            dates.append(date)
             while True:
-                destinations.append(destination)
-                tasks.append(task)
-                dates.append(date)
-                try:
-                    destination = config.readline().strip('\n')
+                destination = config.readline().strip('\n')
+                if destination:
                     task = config.readline().strip('\n')
                     date = config.readline().strip('\n')
-                except:
+                    destinations.append(destination)
+                    tasks.append(task)
+                    dates.append(date)
+                else:
                     break
             config.close()
             text = ''
@@ -53,6 +43,20 @@ class Sync(object):
                 text += str(i + 1) + '.\nDestination: ' + destinations[i]
                 text += '\nTask: ' + tasks[i]
                 text += '\nDate: ' + dates[i] + '\n\n'
+
+            def choose():
+                print 'Choose from the following options:'
+                try:
+                    choice = int(raw_input(text))
+                except ValueError:
+                    print 'Invalid entry. Try again.'
+                    choose()
+                if (choice >= 1) and (choice <= i + 1):
+                    return choice
+                else:
+                    print 'Invalid entry. Try again.'
+                    choose()
+
             chosen = choose() - 1
             return destinations[chosen], tasks[chosen]
 
