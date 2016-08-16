@@ -1,7 +1,6 @@
 import os
 import shutil
 import time
-import sys
 
 
 class Sync(object):
@@ -13,97 +12,90 @@ class Sync(object):
         self.input_locations()
 
     def check_config(self):
-        try:
-            config = open(self.source + '.psynk')
-        except IOError:
-            return False, False
-        choice = input('Do you want to repeat a previous operation for the directory? ')
-        if choice.lower() == 'y':
-            destination = config.readline().strip('\n')
-            task = config.readline().strip('\n')
-            date = config.readline().strip('\n')
-            destinations = []
-            tasks = []
-            dates = []
-            destinations.append(destination)
-            tasks.append(task)
-            dates.append(date)
-            while True:
+        while True:
+            try:
+                config = open(self.source + '.psynk')
+            except IOError:
+                return False, False
+            choice = input('Do you want to repeat a previous operation for the directory? ')
+            if choice.lower() == 'y':
                 destination = config.readline().strip('\n')
-                if destination:
-                    task = config.readline().strip('\n')
-                    date = config.readline().strip('\n')
-                    destinations.append(destination)
-                    tasks.append(task)
-                    dates.append(date)
-                else:
-                    break
-            config.close()
-            text = ''
-            for i in range(len(destinations)):
-                text += str(i + 1) + '.\nDestination: ' + destinations[i]
-                text += '\nTask: ' + tasks[i]
-                text += '\nDate: ' + dates[i] + '\n\n'
-
-            def choose():
-                print('Choose from the following options:')
-                try:
-                    number = int(input(text))
-                    if (number >= 1) and (number <= len(destinations)):
-                        return number
+                task = config.readline().strip('\n')
+                date = config.readline().strip('\n')
+                destinations = []
+                tasks = []
+                dates = []
+                destinations.append(destination)
+                tasks.append(task)
+                dates.append(date)
+                while True:
+                    destination = config.readline().strip('\n')
+                    if destination:
+                        task = config.readline().strip('\n')
+                        date = config.readline().strip('\n')
+                        destinations.append(destination)
+                        tasks.append(task)
+                        dates.append(date)
                     else:
-                        print('Invalid entry. Try again.\n')
-                        choose()
-                except ValueError:
-                    print('Invalid entry. Try again.\n')
-                    choose()
+                        break
+                config.close()
+                text = ''
+                for i in range(len(destinations)):
+                    text += str(i + 1) + '.\nDestination: ' + destinations[i]
+                    text += '\nTask: ' + tasks[i]
+                    text += '\nDate: ' + dates[i] + '\n\n'
 
-            chosen = choose() - 1
-            return destinations[chosen], tasks[chosen]
+                def choose():
+                    while True:
+                        print('Choose from the following options:')
+                        try:
+                            number = int(input(text))
+                            if (number >= 1) and (number <= len(destinations)):
+                                return number
+                            else:
+                                print('Invalid entry. Try again.\n')
+                        except ValueError:
+                            print('Invalid entry. Try again.\n')
 
-        elif choice.lower() == 'n':
-            return False, False
-        else:
-            print('Invalid input. Try again.')
-            self.check_config()
+                chosen = choose() - 1
+                return destinations[chosen], tasks[chosen]
+
+            elif choice.lower() == 'n':
+                return False, False
+            else:
+                print('Invalid input. Try again.')
 
     def input_locations(self):
         def _input_source_():
-            src = input('Enter location of source file/folder: ').rstrip('/')
-            source, source_type = src, 'directory'
-            try:
-                os.listdir(source)
-                return source, source_type
-            except FileNotFoundError:
-                print('File/Folder doesn\'t exist. Try again.\n')
-                _input_source_()
-            except NotADirectoryError:
-                source_type = 'file'
-                return source, source_type
-            except:
-                print('Unexpected Error:', sys.exc_info()[0])
-                raise
+            while True:
+                src = input('Enter location of source file/folder: ').rstrip('/')
+                source, source_type = src, 'directory'
+                try:
+                    os.listdir(source)
+                    return source, source_type
+                except FileNotFoundError:
+                    print('File/Folder doesn\'t exist. Try again.\n')
+                except NotADirectoryError:
+                    source_type = 'file'
+                    return source, source_type
 
         def _input_destination_():
-            destination = input('Enter location of destination folder: ').rstrip('/')
-            if self.__source_type == 'directory':
-                return destination
-            elif self.__source_type == 'file':
-                try:
-                    os.listdir(destination)
+            while True:
+                destination = input('Enter location of destination folder: ').rstrip('/')
+                if self.__source_type == 'directory' and destination:
                     return destination
-                except (NotADirectoryError, FileNotFoundError):
-                    choice = input('Destination folder doesn\'t exist.\n\
-                                        Do you want to create a new folder of the same name? (y/n): ')
-                    if choice.lower() == 'y':
-                        os.mkdir(destination)
+                elif self.__source_type == 'file':
+                    try:
+                        os.listdir(destination)
                         return destination
-                    elif choice.lower() == 'n':
-                        print('Try again.\n')
-                        _input_destination_()
-                except:
-                    print('Unexpected Error:', sys.exc_info()[0])
-                    raise
+                    except (NotADirectoryError, FileNotFoundError):
+                        choice = input('Destination folder doesn\'t exist.\n\
+                                            Do you want to create a new folder of the same name? (y/n): ')
+                        if choice.lower() == 'y':
+                            os.mkdir(destination)
+                            return destination
+                        elif choice.lower() == 'n':
+                            print('Try again.\n')
 
         self.source, self.__source_type = _input_source_()
         self.destination, self.task = self.check_config()
