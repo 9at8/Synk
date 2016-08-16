@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+import sys
 
 
 class Sync(object):
@@ -16,7 +17,7 @@ class Sync(object):
             config = open(self.source + '.psynk')
         except IOError:
             return False, False
-        choice = raw_input('Do you want to repeat a previous operation for the directory?')
+        choice = input('Do you want to repeat a previous operation for the directory? ')
         if choice.lower() == 'y':
             destination = config.readline().strip('\n')
             task = config.readline().strip('\n')
@@ -45,16 +46,16 @@ class Sync(object):
                 text += '\nDate: ' + dates[i] + '\n\n'
 
             def choose():
-                print 'Choose from the following options:'
+                print('Choose from the following options:')
                 try:
-                    choice = int(raw_input(text))
+                    number = int(input(text))
+                    if (number >= 1) and (number <= len(destinations)):
+                        return number
+                    else:
+                        print('Invalid entry. Try again.\n')
+                        choose()
                 except ValueError:
-                    print 'Invalid entry. Try again.'
-                    choose()
-                if (choice >= 1) and (choice <= i + 1):
-                    return choice
-                else:
-                    print 'Invalid entry. Try again.'
+                    print('Invalid entry. Try again.\n')
                     choose()
 
             chosen = choose() - 1
@@ -63,48 +64,46 @@ class Sync(object):
         elif choice.lower() == 'n':
             return False, False
         else:
-            print 'Invalid input. Try again.'
+            print('Invalid input. Try again.')
             self.check_config()
 
     def input_locations(self):
         def _input_source_():
-            src = raw_input('Enter location of source file/folder: ').rstrip('/')
+            src = input('Enter location of source file/folder: ').rstrip('/')
             source, source_type = src, 'directory'
             try:
                 os.listdir(source)
                 return source, source_type
-            except OSError, e:
-                if e.errno == 2:
-                    print 'File/Folder doesn\'t exist. Try again.\n'
-                    _input_source_()
-                elif e.errno == 20:
-                    source_type = 'file'
-                    return source, source_type
-                else:
-                    print 'There is some error.'
-                    print e.message
+            except FileNotFoundError:
+                print('File/Folder doesn\'t exist. Try again.\n')
+                _input_source_()
+            except NotADirectoryError:
+                source_type = 'file'
+                return source, source_type
+            except:
+                print('Unexpected Error:', sys.exc_info()[0])
+                raise
 
         def _input_destination_():
-            destination = raw_input('Enter location of destination folder: ').rstrip('/')
+            destination = input('Enter location of destination folder: ').rstrip('/')
             if self.__source_type == 'directory':
                 return destination
             elif self.__source_type == 'file':
                 try:
                     os.listdir(destination)
                     return destination
-                except OSError, e:
-                    if e.errno == 2 or e.errno == 20:
-                        choice = raw_input('Destination folder doesn\'t exist.\n\
-                                            Do you want to create a new folder of the same name? (y/n): ')
-                        if choice.lower() == 'y':
-                            os.mkdir(destination)
-                            return destination
-                        elif choice.lower() == 'n':
-                            print 'Try again.\n'
-                            _input_destination_()
-                    else:
-                        print 'There is some kind of an error.'
-                        print e.message
+                except (NotADirectoryError, FileNotFoundError):
+                    choice = input('Destination folder doesn\'t exist.\n\
+                                        Do you want to create a new folder of the same name? (y/n): ')
+                    if choice.lower() == 'y':
+                        os.mkdir(destination)
+                        return destination
+                    elif choice.lower() == 'n':
+                        print('Try again.\n')
+                        _input_destination_()
+                except:
+                    print('Unexpected Error:', sys.exc_info()[0])
+                    raise
 
         self.source, self.__source_type = _input_source_()
         self.destination, self.task = self.check_config()
@@ -129,41 +128,43 @@ class Sync(object):
         minutes = str(present.tm_min)
         seconds = str(present.tm_sec)
         date = day + '/' + month + '/' + year + ' - ' + \
-               hours + ':' + minutes + '::' + seconds + ' - '
+               hours + ':' + minutes + '::' + seconds
         config.write(date + '\n')
         config.close()
 
     def copy(self):
         if self.__source_type == 'file':
-            print 'Copying', self.source, 'to', self.destination, '...\n'
-            print 'Please be patient...\n'
+            print('Copying', self.source, 'to', self.destination, '...\n')
+            print('Please be patient...\n')
             shutil.copy2(self.source, self.destination)
             Sync.create_config(self, 'copy')
-            print 'Mission Accomplished!'
+            print('Mission Accomplished!')
         elif self.__source_type == 'directory':
-            print 'Copying', self.source, 'to', self.destination, '...'
-            print 'Please be patient...\n'
+            print('Copying', self.source, 'to', self.destination, '...')
+            print('Please be patient...\n')
             try:
                 shutil.copytree(self.source, self.destination)
-            except OSError, e:
-                if e.errno == 17:
-                    print self.destination, 'already exists.'
-                    print self.destination, 'will be emptied. Press enter to continue.'
-                    raw_input()
-                    shutil.rmtree(self.destination)
-                    shutil.copytree(self.source, self.destination)
+            except FileExistsError:
+                print(self.destination, 'already exists.')
+                print(self.destination, 'will be emptied. Press enter to continue.')
+                input()
+                shutil.rmtree(self.destination)
+                shutil.copytree(self.source, self.destination)
             self.create_config('copy')
-            print 'Mission Accomplished!'
+            print('Mission Accomplished!')
 
     def move(self):
-        choice = raw_input('Are you sure about moving file(s)? (y/n): ').lower()
+        choice = input('Are you sure about moving file(s)? (y/n): ').lower()
         if choice == 'y':
-            print 'Moving', self.source, 'to', self.destination, '...\n'
-            print 'Please be patient...\n'
+            print('Moving', self.source, 'to', self.destination, '...\n')
+            print('Please be patient...\n')
             shutil.move(self.source, self.destination)
             self.create_config('move')
-            print 'Mission Accomplished!'
+            print('Mission Accomplished!')
         elif choice == 'n':
-            copy = 'y' == raw_input('Do you want to copy files instead? (y/n): ').lower()
+            copy = 'y' == input('Do you want to copy files instead? (y/n): ').lower()
             if copy:
                 Sync.copy(self)
+
+
+s1 = Sync()
