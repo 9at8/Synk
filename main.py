@@ -70,25 +70,24 @@ class Sync(object):
             while True:
                 src = input('Enter location of source file/folder: ').rstrip('/')
                 source, source_type = src, 'directory'
-                try:
-                    os.listdir(source)
-                    return source, source_type
-                except FileNotFoundError:
+                if os.path.exists(source):
+                    if os.path.isdir(source):
+                        return source, source_type
+                    else:
+                        source_type = 'file'
+                        return source, source_type
+                else:
                     print('File/Folder doesn\'t exist. Try again.\n')
-                except NotADirectoryError:
-                    source_type = 'file'
-                    return source, source_type
 
         def _input_destination_():
             while True:
-                destination = input('Enter location of destination folder: ').rstrip('/')
+                destination = input('Enter location of destination folder: ').rstrip('/') + '/'
                 if self.__source_type == 'directory' and destination:
                     return destination
                 elif self.__source_type == 'file':
-                    try:
-                        os.listdir(destination)
+                    if os.path.isdir(destination):
                         return destination
-                    except (NotADirectoryError, FileNotFoundError):
+                    else:
                         choice = input('Destination folder doesn\'t exist.\n\
                                             Do you want to create a new folder of the same name? (y/n): ')
                         if choice.lower() == 'y':
