@@ -14,7 +14,7 @@ class Sync(object):
     def check_config(self):
         while True:
             try:
-                config = open(self.source + '.psynk')
+                config = open(self.source.rstrip('/') + '.psynk')
             except IOError:
                 return False, False
             choice = input('Do you want to repeat a previous operation for the directory? ')
@@ -68,7 +68,7 @@ class Sync(object):
     def input_locations(self):
         def _input_source_():
             while True:
-                src = input('Enter location of source file/folder: ').rstrip('/')
+                src = input('Enter location of source file/folder: ').rstrip('/') + '/'
                 source, source_type = src, 'directory'
                 if os.path.exists(source):
                     if os.path.isdir(source):
@@ -108,7 +108,7 @@ class Sync(object):
             self.task = ''
 
     def create_config(self, task):
-        config = open(self.source + '.psynk', 'a+')
+        config = open(self.source.rstrip('/') + '.psynk', 'a+')
         config.write(self.destination + '\n')
         config.write(task + '\n')
         present = time.localtime()
@@ -124,6 +124,22 @@ class Sync(object):
         config.close()
 
     def copy(self):
+        def merge(source, destination):
+            for item in os.listdir(source):
+                src = source + item
+                dst = destination + item
+                if os.path.isdir(src):
+                    if os.path.isdir(dst):
+                        merge(src, dst)
+                    else:
+                        if os.path.exists(dst):
+                            os.remove('dst')
+                        shutil.copytree(src, dst)
+                else:
+                    if os.path.exists(dst):
+                        os.remove('dst')
+                    shutil.copy2(src, dst)
+
         if self.__source_type == 'file':
             print('Copying', self.source, 'to', self.destination, '...\n')
             print('Please be patient...\n')
@@ -132,15 +148,27 @@ class Sync(object):
             print('Mission Accomplished!')
         elif self.__source_type == 'directory':
             print('Copying', self.source, 'to', self.destination, '...')
-            print('Please be patient...\n')
             try:
                 shutil.copytree(self.source, self.destination)
             except FileExistsError:
                 print(self.destination, 'already exists.')
-                print(self.destination, 'will be emptied. Press enter to continue.')
-                input()
-                shutil.rmtree(self.destination)
-                shutil.copytree(self.source, self.destination)
+                print('Do you want to:')
+                text = '1. Merge the directories?\n2. Delete the destination directory?\n(1/2): '
+                while True:
+                    choice = input(text)
+                    if choice == '1':
+                        print('Please be patient...\nMerging directories...\n')
+                        merge(self.source, self.destination)
+                        break
+                    elif choice == '2':
+                        print(self.destination, 'will be emptied. Press enter to continue.')
+                        input()
+                        print('Please be patient...\n')
+                        shutil.rmtree(self.destination)
+                        shutil.copytree(self.source, self.destination)
+                    else:
+                        print('Invalid entry. Try again.\n')
+
             self.create_config('copy')
             print('Mission Accomplished!')
 
@@ -151,7 +179,8 @@ class Sync(object):
             print('Please be patient...\n')
             shutil.move(self.source, self.destination)
             self.create_config('move')
-            print('Mission Accomplished!')
+            shutil.move(self.source.rstrip('/') + '.psynk', self.destination)
+            print('Mission Accomplished!\n')
         elif choice == 'n':
             copy = 'y' == input('Do you want to copy files instead? (y/n): ').lower()
             if copy:
