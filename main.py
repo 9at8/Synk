@@ -125,6 +125,25 @@ class Sync(object):
 
     def copy(self):
         def merge(source, destination):
+            def merge_choice(x):
+                while True:
+                    print(x, 'already exists in the destination as a file.')
+                    choice = input('Do you want to overwrite it? (y/n): ')
+                    if choice.lower() == 'y':
+                        print('-----')
+                        os.remove(x)
+                        print(x, 'file successfully deleted.')
+                        print('-----')
+                        break
+                    elif choice.lower() == 'n':
+                        print('-----')
+                        os.rename(x, x.rstrip('/') + '(1)')
+                        print(x, 'renamed to', x.rstrip('/') + '(1)')
+                        print('-----')
+                        break
+                    else:
+                        print('Invalid entry. Try again.')
+
             for item in os.listdir(source):
                 src = source + item
                 dst = destination + item
@@ -133,11 +152,11 @@ class Sync(object):
                         merge(src, dst)
                     else:
                         if os.path.exists(dst):
-                            os.remove('dst')
+                            merge_choice(dst)
                         shutil.copytree(src, dst)
                 else:
                     if os.path.exists(dst):
-                        os.remove('dst')
+                        merge_choice(dst)
                     shutil.copy2(src, dst)
 
         if self.__source_type == 'file':
