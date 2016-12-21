@@ -204,3 +204,5 @@ class Sync(object):
             copy = 'y' == input('Do you want to copy files instead? (y/n): ').lower()
             if copy:
                 Sync.copy(self)
+
+#Yay
