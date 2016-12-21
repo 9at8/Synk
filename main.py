@@ -45,19 +45,18 @@ class Sync(object):
                     text += '\nTask: ' + tasks[i]
                     text += '\nDate: ' + dates[i] + '\n\n'
 
-                def choose():
-                    while True:
-                        print('Choose from the following options:')
-                        try:
-                            number = int(input(text))
-                            if (number >= 1) and (number <= len(destinations)):
-                                return number
-                            else:
-                                print('Invalid entry. Try again.\n')
-                        except ValueError:
+                while True:
+                    print('Choose from the following options:')
+                    try:
+                        number = int(input(text))
+                        if (number >= 1) and (number <= len(destinations)):
+                            chosen = number - 1
+                            break
+                        else:
                             print('Invalid entry. Try again.\n')
+                    except ValueError:
+                        print('Invalid entry. Try again.\n')
 
-                chosen = choose() - 1
                 return destinations[chosen], tasks[chosen]
 
             elif choice.lower() == 'n':
@@ -89,7 +88,7 @@ class Sync(object):
                         return destination
                     else:
                         choice = input('Destination folder doesn\'t exist.\n\
-                                            Do you want to create a new folder of the same name? (y/n): ')
+                        Do you want to create a new folder of the same name? (y/n): ')
                         if choice.lower() == 'y':
                             os.mkdir(destination)
                             return destination
