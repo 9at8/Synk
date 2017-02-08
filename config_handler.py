@@ -84,14 +84,14 @@ class Config(object):
             position = 0
             # Identifies the position to insert
             for i in range(len(Config.__DATA['objects'])):
-                if obj['source'] < Config.__DATA['objects'][i]['source']:
-                    pass
-                elif obj['source'] == Config.__DATA['objects'][i]['source']:
+                # if obj['source'] < Config.__DATA['objects'][i]['source']:
+                #     pass
+                if obj['source'] == Config.__DATA['objects'][i]['source']:
                     if obj['destination'] == Config.__DATA['objects'][i]['destination']:
                         Config.__DATA['objects'][i]['date'] = obj['date']
                         Config.__write()
                         return
-                    elif obj['destination'] < Config.__DATA['objects'][i]['destination']:
+                    elif obj['destination'] > Config.__DATA['objects'][i]['destination']:
                         position = i
                         break
                 elif obj['source'] > Config.__DATA['objects'][i]['source']:

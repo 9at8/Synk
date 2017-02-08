@@ -21,6 +21,8 @@ def validate_paths():
                 if os.path.exists(destination):
                     break
                 os.mkdir(destination)
+                os.rmdir(destination)
+                break
             except FileNotFoundError as e:
                 print('Error:', e)
         elif destination:
@@ -46,16 +48,31 @@ def tasker(operation, everything=False):
     for i in range(len(pairs)):
         source = pairs[i]['source']
         destination = pairs[i]['destination']
-        while True:
-            choice = input(operation + '\n' + source + '\nto\n' + destination + '? (y/n): ').lower()
+        choice = ''
+        while not everything:
+            choice = input('\n' + operation + '\n' + source + '\nto\n' + destination + '? (y/n): ').lower()
             if choice == 'y' or choice == 'n':
                 print()
                 break
         if everything or choice == 'y':
-            print(operating + '\n' + source + '\nto\n' + destination + '\n')
+            print('\n' + operating + '\n' + source + '\nto\n' + destination + '\n')
             if operation == 'Sync':
                 this = Sync(source, destination)
-                this.copy()
+                try:
+                    result = this.copy()
+                    if not result:
+                        print('Could not Sync paths. Source does not exist anymore.')
+                        while True:
+                            choice = input('Delete ' + source + '? (y/n): ').lower()
+                            if choice == 'y':
+                                print()
+                                old = Config(source, destination)
+                                old.delete()
+                                break
+                        continue
+                except PermissionError:
+                    print('Could not Sync paths. Permission Denied.')
+                    continue
             elif operation == 'Delete':
                 this = Config(source, destination)
                 this.delete()
@@ -68,7 +85,7 @@ def tasker(operation, everything=False):
 
 
 def __main__():
-    print('Psynk\n-----')
+    print('\n\nPsynk\n-----')
     print('(P)Syn(k)chronizes local files and directories\n')
     while True:
         input('Press enter to continue...\n')
@@ -77,8 +94,8 @@ def __main__():
                                '2) Sync all saved objects in existing config.\n' +
                                '3) Sync specific objects in existing config.\n' +
                                '4) Delete existing config.\n' +
-                               '5) Delete existing config.\n' +
-                               '6) Quit!\nEnter Choice: '))
+                               '5) Delete specific objects in existing config.\n' +
+                               '6) Quit!\n\nEnter Choice: '))
         except ValueError:
             print('Invalid input! Try again!\n\n')
             continue
